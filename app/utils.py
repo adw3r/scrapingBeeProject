@@ -3,7 +3,7 @@ import pathlib
 from random import choice
 from string import digits, ascii_letters
 
-import config
+from app import config
 
 
 def generate_text(length: int = 6, sequence=ascii_letters + digits) -> str:
