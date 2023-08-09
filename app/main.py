@@ -20,9 +20,10 @@ def main():
     searching_query = scrapingbee.SearchingQuery(searching_statement)  # can raise ApiKeyError if empty
     scraping_object: scrapingbee.ScrapingObject = scrapingbee.send_request(searching_query)  # can raise ApiKeyError
 
-    if not scraping_object:
+    organic_results = scraping_object.organic_results
+    if not organic_results:
         return
-    for result in scraping_object.organic_results:
+    for result in organic_results:
         print(result.url)
 
 

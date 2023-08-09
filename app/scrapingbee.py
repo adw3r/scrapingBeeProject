@@ -73,10 +73,12 @@ class OrganicResult(ToDict):
     rich_snippet: dict
     date: str
     date_utc: str
+    created_at: datetime = datetime.now()
 
     def to_dict(self) -> dict:
         return {
             'url': self.url,
+            'created_at': self.created_at.isoformat(),
             'displayed_url': self.displayed_url,
             'description': self.description,
             'position': self.position,
