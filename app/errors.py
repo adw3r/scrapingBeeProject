@@ -1,0 +1,3 @@
+
+class ApiKeyError(Exception):
+    ...

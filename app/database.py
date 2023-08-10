@@ -1,4 +1,4 @@
-import abc
+from typing import Protocol
 
 import pymongo
 
@@ -8,16 +8,15 @@ mongo_client = pymongo.MongoClient(config.MONGO_URL)
 db = mongo_client.scrapingbee
 
 
-class ToDict(abc.ABC):
+class JsonProtocol(Protocol):
 
-    @abc.abstractmethod
-    def to_dict(self) -> dict:
+    def model_dump(self, *args, **kwargs) -> dict:
         raise NotImplementedError
 
 
 class Database:
 
-    def save(self, data: ToDict):
+    def save(self, data: JsonProtocol):
         '''
         save(data.to_dict())
 
