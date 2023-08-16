@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Literal
 
-
 import pydantic
 import requests
 
@@ -52,6 +51,15 @@ class ScrapingObject(pydantic.BaseModel):
     knowledge_graph: dict = {}
 
 
+class MatchError:
+
+    def __init__(self, error_message):
+        self.error_message = error_message
+
+    def __eq__(self, other) -> bool:
+        return other in self.error_message
+
+
 def send_request(searching_query: SearchingQuery) -> ScrapingObject:
     params: dict = searching_query.model_dump()
     response = requests.get(
@@ -63,5 +71,10 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject:
     if not error_message:
         return ScrapingObject(searching_query=searching_query, **response.json())
     else:
-        if 'Invalid api key' in error_message:
-            raise errors.ApiKeyError(response.json())
+        match MatchError(error_message):
+            case 'Invalid api key':
+                raise errors.ScrapingBeeApiKeyError(error_message)
+            case 'Monthly API calls limit reached':
+                raise errors.ScrapingBeeMonthlyCallsReachedError(error_message)
+            case _:
+                raise errors.ScrapingBeeUnexpectedError(error_message)

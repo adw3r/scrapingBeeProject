@@ -1,3 +1,10 @@
+class ScrapingBeeApiKeyError(Exception):
+    ...
 
-class ApiKeyError(Exception):
+
+class ScrapingBeeUnexpectedError(Exception):
+    ...
+
+
+class ScrapingBeeMonthlyCallsReachedError(Exception):
     ...

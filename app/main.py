@@ -1,28 +1,20 @@
-from app import scrapingbee
-
-# -----------------------------
-# todo
-#   country code management
-#   page management
-#   spilt searching_statement into small pieces
-
-# -----------------------------
-# todo
-#   save scraped data
-
-# -----------------------------
-# todo
-#   mark viewed scraping result
+from app import scrapingbee, database
 
 
-def main():
-    searching_statement = "intitle:contact intext:\"Send Me a Copy\""
-    searching_query = scrapingbee.SearchingQuery(search=searching_statement)
+def parse_donors():
+    searching_statement = "inurl:contactus intext:\"Send Me a Copy\""
+    d = dict(
+        search=searching_statement,
+        page=1,
+        nb_results=100,
+        # country_code='uk'
+    )
+    searching_query = scrapingbee.SearchingQuery(**d)
     scraping_object: scrapingbee.ScrapingObject = scrapingbee.send_request(searching_query)
-
-    for result in scraping_object.organic_results:
-        print(result)
+    print(f'{scraping_object!r}')
+    for res in scraping_object.organic_results:
+        database.OrganicResultsRepo.save_one(res)
 
 
 if __name__ == '__main__':
-    main()
+    parse_donors()

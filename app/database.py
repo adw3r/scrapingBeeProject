@@ -1,26 +1,82 @@
-from typing import Protocol
+import abc
+import logging
+from typing import Iterable
 
+import pydantic
 import pymongo
+from app import scrapingbee
 
 from app import config
 
 mongo_client = pymongo.MongoClient(config.MONGO_URL)
-db = mongo_client.scrapingbee
 
 
-class JsonProtocol(Protocol):
-
-    def model_dump(self, *args, **kwargs) -> dict:
-        raise NotImplementedError
+class InvalidTypeError(Exception):
+    ...
 
 
-class Database:
+def _check_item(item: pydantic.BaseModel) -> pydantic.BaseModel:
+    stmnt = not issubclass(type(item), pydantic.BaseModel)
+    if stmnt:
+        raise InvalidTypeError(f'{type(item)!r} type is not accepted!')
+    return item
 
-    def save(self, data: JsonProtocol):
-        '''
-        save(data.to_dict())
 
-        :param data:
-        :return:
-        '''
-        raise NotImplementedError
+def _check_items(items: Iterable[pydantic.BaseModel]) -> Iterable[pydantic.BaseModel]:
+    stmnt = not isinstance(items, Iterable)
+    if stmnt:
+        raise InvalidTypeError(f'{type(items)!r} type is not accepted!')
+    [_check_item(item) for item in items]
+    return items
+
+
+class AbstractRepo(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def save_one(cls, item: pydantic.BaseModel):
+        ...
+
+    @classmethod
+    @abc.abstractmethod
+    def save_many(cls, items: Iterable[pydantic.BaseModel]):
+        ...
+
+    @classmethod
+    @abc.abstractmethod
+    def find(cls, *args, **kwargs) -> pydantic.BaseModel:
+        ...
+
+
+class DomainExistingError(Exception):
+    pass
+
+
+class OrganicResultsRepo(AbstractRepo):
+    __collection: pymongo.collection.Collection = mongo_client.scrapingbee.organic_results_collection
+    __collection.create_index('domain', unique=True)
+
+    @classmethod
+    def __save_item(cls, item: pydantic.BaseModel):
+        print(f'saving item {item!r}')
+        try:
+            cls.__collection.insert_one(item.model_dump())
+        except Exception as error:
+            print(f'{error!r}')
+
+    @classmethod
+    def save_one(cls, item: scrapingbee.OrganicResult) -> bool:
+        item = _check_item(item)
+        cls.__save_item(item)
+        return True
+
+    @classmethod
+    def save_many(cls, items: Iterable[scrapingbee.OrganicResult]):
+        items: Iterable[pydantic.BaseModel] = _check_items(items)
+        for item in items:
+            cls.__save_item(item)
+
+    @classmethod
+    def find(cls, *args, **kwargs) -> list[scrapingbee.OrganicResult]:
+        results: pymongo.collection.Cursor = cls.__collection.find(*args, **kwargs)
+        return [scrapingbee.OrganicResult(**res) for res in results]
