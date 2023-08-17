@@ -17,11 +17,11 @@ def test_database_organic_result_repo_save_one():
 
 
 def test_database_organic_result_repo_find():
-    results: list[scrapingbee.OrganicResult] = database.OrganicResultsRepo.find()
+    results: list[dict] = database.OrganicResultsRepo.find()
     print(results)
 
     for i in results:
-        assert type(i) is scrapingbee.OrganicResult
+        assert type(i) is dict
 
 
 def test_database_organic_result_repo_save_many():

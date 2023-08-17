@@ -1,12 +1,11 @@
 import abc
-import logging
 from typing import Iterable
 
 import pydantic
 import pymongo
-from app import scrapingbee
 
 from app import config
+from app import scrapingbee
 
 mongo_client = pymongo.MongoClient(config.MONGO_URL)
 
@@ -34,6 +33,11 @@ class AbstractRepo(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
+    def update(cls, item: pydantic.BaseModel):
+        ...
+
+    @classmethod
+    @abc.abstractmethod
     def save_one(cls, item: pydantic.BaseModel):
         ...
 
@@ -48,19 +52,15 @@ class AbstractRepo(abc.ABC):
         ...
 
 
-class DomainExistingError(Exception):
-    pass
-
-
 class OrganicResultsRepo(AbstractRepo):
-    __collection: pymongo.collection.Collection = mongo_client.scrapingbee.organic_results_collection
-    __collection.create_index('domain', unique=True)
+    collection: pymongo.collection.Collection = mongo_client.scrapingbee.organic_results_collection
+    collection.create_index('domain', unique=True)
 
     @classmethod
     def __save_item(cls, item: pydantic.BaseModel):
         print(f'saving item {item!r}')
         try:
-            cls.__collection.insert_one(item.model_dump())
+            cls.collection.insert_one(item.model_dump())
         except Exception as error:
             print(f'{error!r}')
 
@@ -77,6 +77,11 @@ class OrganicResultsRepo(AbstractRepo):
             cls.__save_item(item)
 
     @classmethod
-    def find(cls, *args, **kwargs) -> list[scrapingbee.OrganicResult]:
-        results: pymongo.collection.Cursor = cls.__collection.find(*args, **kwargs)
-        return [scrapingbee.OrganicResult(**res) for res in results]
+    def find(cls, *args, **kwargs) -> list[dict]:
+        results: pymongo.collection.Cursor = cls.collection.find(*args, **kwargs).limit(50)
+        return [res for res in results]
+
+    @classmethod
+    def update(cls, item: dict):
+        res = cls.collection.update_one({'_id': item['_id']}, {'$set': item})
+        return res

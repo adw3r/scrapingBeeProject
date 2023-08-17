@@ -3,6 +3,7 @@ from typing import Literal
 
 import pydantic
 import requests
+from bson import ObjectId
 
 from app import config, errors
 
@@ -21,6 +22,7 @@ class SearchingQuery(pydantic.BaseModel):
 
 
 class OrganicResult(pydantic.BaseModel):
+    _id: ObjectId | None = None
     url: str
     displayed_url: str
     description: str
@@ -51,15 +53,6 @@ class ScrapingObject(pydantic.BaseModel):
     knowledge_graph: dict = {}
 
 
-class MatchError:
-
-    def __init__(self, error_message):
-        self.error_message = error_message
-
-    def __eq__(self, other) -> bool:
-        return other in self.error_message
-
-
 def send_request(searching_query: SearchingQuery) -> ScrapingObject:
     params: dict = searching_query.model_dump()
     response = requests.get(
@@ -68,13 +61,26 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject:
 
     )
     error_message = response.json().get('message')
-    if not error_message:
-        return ScrapingObject(searching_query=searching_query, **response.json())
+    if error_message:
+        __match_error(error_message)
     else:
-        match MatchError(error_message):
-            case 'Invalid api key':
-                raise errors.ScrapingBeeApiKeyError(error_message)
-            case 'Monthly API calls limit reached':
-                raise errors.ScrapingBeeMonthlyCallsReachedError(error_message)
-            case _:
-                raise errors.ScrapingBeeUnexpectedError(error_message)
+        return ScrapingObject(searching_query=searching_query, **response.json())
+
+
+class __MatchError:
+
+    def __init__(self, error_message):
+        self.error_message = error_message
+
+    def __eq__(self, other) -> bool:
+        return other in self.error_message
+
+
+def __match_error(error_message):
+    match __MatchError(error_message):
+        case 'Invalid api key':
+            raise errors.ScrapingBeeApiKeyError(error_message)
+        case 'Monthly API calls limit reached':
+            raise errors.ScrapingBeeMonthlyCallsReachedError(error_message)
+        case _:
+            raise errors.ScrapingBeeUnexpectedError(error_message)
