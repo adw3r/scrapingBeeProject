@@ -22,7 +22,6 @@ class SearchingQuery(pydantic.BaseModel):
 
 
 class OrganicResult(pydantic.BaseModel):
-    _id: ObjectId | None = None
     url: str
     displayed_url: str
     description: str
@@ -35,10 +34,10 @@ class OrganicResult(pydantic.BaseModel):
     date_utc: str | None = None
     status: Literal['not viewed', 'viewed'] | str = 'not viewed'
     created_at: datetime = pydantic.Field(default_factory=datetime.now)
+    searching_query: SearchingQuery | None = None
 
 
 class ScrapingObject(pydantic.BaseModel):
-    searching_query: SearchingQuery
     organic_results: list[OrganicResult] = []
     created_at: datetime = pydantic.Field(default_factory=datetime.now)
     meta_data: dict = {}
@@ -64,7 +63,7 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject:
     if error_message:
         __match_error(error_message)
     else:
-        return ScrapingObject(searching_query=searching_query, **response.json())
+        return ScrapingObject(**response.json())
 
 
 class __MatchError:
