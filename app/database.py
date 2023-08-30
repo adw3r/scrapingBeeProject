@@ -4,8 +4,7 @@ from typing import Iterable
 import pydantic
 import pymongo
 
-from app import config
-from app import scrapingbee
+from app import config, scrapingbee
 
 mongo_client = pymongo.MongoClient(config.MONGO_URL)
 
@@ -30,11 +29,6 @@ def _check_items(items: Iterable[pydantic.BaseModel]) -> Iterable[pydantic.BaseM
 
 
 class AbstractRepo(abc.ABC):
-
-    @classmethod
-    @abc.abstractmethod
-    def update(cls, item: pydantic.BaseModel):
-        ...
 
     @classmethod
     @abc.abstractmethod
@@ -80,8 +74,3 @@ class OrganicResultsRepo(AbstractRepo):
     def find(cls, *args, **kwargs) -> list[dict]:
         results: pymongo.collection.Cursor = cls.collection.find(*args, **kwargs).limit(50)
         return [res for res in results]
-
-    @classmethod
-    def update(cls, item: dict):
-        res = cls.collection.update_one({'_id': item['_id']}, {'$set': item})
-        return res

@@ -3,7 +3,6 @@ from typing import Literal
 
 import pydantic
 import requests
-from bson import ObjectId
 
 from app import config, errors
 
@@ -24,12 +23,12 @@ class SearchingQuery(pydantic.BaseModel):
 class OrganicResult(pydantic.BaseModel):
     url: str
     displayed_url: str
-    description: str
     position: int
     title: str
     domain: str
-    sitelinks: list
+    sitelinks: list | dict
     rich_snippet: dict
+    description: str | None = None
     date: str | None = None
     date_utc: str | None = None
     status: Literal['not viewed', 'viewed'] | str = 'not viewed'
@@ -57,9 +56,10 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject:
     response = requests.get(
         url="https://app.scrapingbee.com/api/v1/store/google",
         params=params,
-
+        verify=False
     )
     error_message = response.json().get('message')
+
     if error_message:
         __match_error(error_message)
     else:
