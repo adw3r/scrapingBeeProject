@@ -56,7 +56,6 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject:
     response = requests.get(
         url="https://app.scrapingbee.com/api/v1/store/google",
         params=params,
-        verify=False
     )
     error_message = response.json().get('message')
 

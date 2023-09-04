@@ -2,7 +2,11 @@ import webbrowser
 
 from app import scrapingbee, database
 
-searching_statement = 'inurl:TellAFriend intext:"friend\'s email"'
+searching_statement = ('inurl:'
+                       'recommendation'
+                       ' intext:'
+                       '"friend\'s email"'
+                       '')
 
 
 def parse_donors():
