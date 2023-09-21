@@ -52,11 +52,10 @@ class OrganicResultsRepo(AbstractRepo):
 
     @classmethod
     def __save_item(cls, item: pydantic.BaseModel):
-        print(f'saving item {item!r}')
         try:
             cls.collection.insert_one(item.model_dump())
         except Exception as error:
-            print(f'{error!r}')
+            config.logger.error(f'{error!r}')
 
     @classmethod
     def save_one(cls, item: scrapingbee.OrganicResult) -> bool:
