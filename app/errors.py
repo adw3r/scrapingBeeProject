@@ -8,3 +8,7 @@ class ScrapingBeeUnexpectedError(Exception):
 
 class ScrapingBeeMonthlyCallsReachedError(Exception):
     ...
+
+
+class CantDecodeResponse(Exception):
+    ...

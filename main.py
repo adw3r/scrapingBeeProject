@@ -24,12 +24,11 @@ def find_donors(stmnt: dict):
         database.OrganicResultsRepo.collection.update_one({'_id': result['_id']}, {'$set': result})
         c += 1
         if c > 10:
-            input('enter:\n')
+            input('enter:')
             c = 0
 
 
 def main():
-
     inurl_list = '''
     inurl:email-to-friend
     inurl:EmailToFriend
@@ -71,7 +70,7 @@ def main():
     for part in inurl_list:
         query = dict(
             search=f'{part} intext:"friend\'s email"',
-            page=1,
+            page=2,
             nb_results=100,
             # country_code='uk'
         )
@@ -79,6 +78,7 @@ def main():
         config.logger.info(f'{stmnt=}')
         parse_donors(query)
         find_donors(stmnt)
+        input('enter:')
 
 
 if __name__ == '__main__':

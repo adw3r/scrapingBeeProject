@@ -51,18 +51,23 @@ class ScrapingObject(pydantic.BaseModel):
     knowledge_graph: dict = {}
 
 
-def send_request(searching_query: SearchingQuery) -> ScrapingObject:
+def send_request(searching_query: SearchingQuery) -> ScrapingObject | None:
     params: dict = searching_query.model_dump()
     response = requests.get(
         url="https://app.scrapingbee.com/api/v1/store/google",
         params=params,
     )
-    error_message = response.json().get('message')
-
-    if error_message:
-        __match_error(error_message)
+    try:
+        response_json = response.json()
+    except Exception as error:
+        config.logger.error(error)
+        raise errors.CantDecodeResponse(error)
     else:
-        return ScrapingObject(**response.json())
+        error_message = response_json.get('message')
+        if error_message:
+            __match_error(error_message)
+        else:
+            return ScrapingObject(**response_json)
 
 
 class __MatchError:
