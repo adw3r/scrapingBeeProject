@@ -1,7 +1,4 @@
-import time
-import webbrowser
-
-from app import database, config
+from app import scrapingbee, database, config
 
 inurl_list = '''
 inurl:email-to-friend
@@ -42,10 +39,6 @@ inurl:forward
 inurl:referral-rewards
 '''.strip().split()
 
-intext_list = '''
-intext:"friend's email"
-'''.strip().split()
-
 # inurl_list = '''
 # inurl:contact-us
 # inurl:contactus
@@ -58,32 +51,40 @@ intext:"friend's email"
 # inurl:contact.html
 # '''.strip().split()
 
+intext_list = '''
+intext:"friend's email"
+'''.strip().split()
 
-def extract_donors(query: str):
-    stmnt = {'searching_query.search': {'$regex': query}, 'status': 'not viewed'}
-    config.logger.info(f'{stmnt=}')
-    results = database.OrganicResultsRepo.collection.find(stmnt, {})
+
+def parse_donors(query: dict):
+    searching_query = scrapingbee.SearchingQuery(**query)
+    scraping_object: scrapingbee.ScrapingObject = scrapingbee.send_request(searching_query)
+    organic_results: list[scrapingbee.OrganicResult] = scraping_object.organic_results
+    for organic_result in organic_results:
+        organic_result.searching_query = searching_query
+        config.logger.info(f'saving {organic_result=}')
+        database.OrganicResultsRepo.save_one(organic_result)
+
+
+def inf_donors_parsing():
     c = 0
-    for result in results:
-        url = result['url']
-        webbrowser.open(url)
-
-        result['status'] = 'viewed'
-        database.OrganicResultsRepo.collection.update_one({'_id': result['_id']}, {'$set': result})
-        c += 1
-        if c > 10:
-            input('enter:')
-            c = 0
-
-
-def inf_extract_donors():
     while True:
         for intext_part in intext_list:
             for inurl_part in inurl_list:
                 search = f'{inurl_part} {intext_part}'
-                extract_donors(search)
-                time.sleep(.2)
+                query = dict(
+                    search=search,
+                    page=c,
+                    nb_results=100,
+                    # country_code='uk'
+                )
+                config.logger.info(f'{query}')
+                parse_donors(query)
+        # if c >= 3:
+        #     c = 0
+        # else:
+        #     c += 1
 
 
 if __name__ == '__main__':
-    inf_extract_donors()
+    inf_donors_parsing()

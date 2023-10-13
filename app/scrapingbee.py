@@ -53,14 +53,21 @@ class ScrapingObject(pydantic.BaseModel):
 
 def send_request(searching_query: SearchingQuery) -> ScrapingObject | None:
     params: dict = searching_query.model_dump()
-    response = requests.get(
-        url="https://app.scrapingbee.com/api/v1/store/google",
-        params=params,
-    )
+    response = None
+    response_content = None
+
+    while not response and not response_content:
+        response = requests.get(
+            url="https://app.scrapingbee.com/api/v1/store/google",
+            params=params,
+        )
+        if response.content:
+            response_content = response.content
     try:
         response_json = response.json()
     except Exception as error:
         config.logger.error(error)
+        config.logger.debug(f'{response.text}')
         raise errors.CantDecodeResponse(error)
     else:
         error_message = response_json.get('message')
