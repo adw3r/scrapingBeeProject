@@ -9,8 +9,8 @@ from app import config, errors
 
 class SearchingQuery(pydantic.BaseModel):
     search: str
-    page: int = 1
     api_key: str = config.SCRAPINGBEE_APIKEY
+    page: int = 1
     add_html: bool = False
     extra_params: str = ''
     country_code: str = 'us'
@@ -57,10 +57,7 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject | None:
     response_content = None
 
     while not response and not response_content:
-        response = requests.get(
-            url="https://app.scrapingbee.com/api/v1/store/google",
-            params=params,
-        )
+        response = __send_request(params)
         if response.content:
             response_content = response.content
     try:
@@ -75,6 +72,14 @@ def send_request(searching_query: SearchingQuery) -> ScrapingObject | None:
             __match_error(error_message)
         else:
             return ScrapingObject(**response_json)
+
+
+def __send_request(params: dict) -> requests.Response:
+    response = requests.get(
+        url="https://app.scrapingbee.com/api/v1/store/google",
+        params=params,
+    )
+    return response
 
 
 class __MatchError:

@@ -1,4 +1,5 @@
 from app import scrapingbee, database, config
+from app.errors import ScrapingBeeUnexpectedError
 
 inurl_list = '''
 inurl:email-to-friend
@@ -58,7 +59,13 @@ intext:"friend's email"
 
 def parse_donors(query: dict):
     searching_query = scrapingbee.SearchingQuery(**query)
-    scraping_object: scrapingbee.ScrapingObject = scrapingbee.send_request(searching_query)
+    scraping_object = None
+    while scraping_object is None:
+        try:
+            scraping_object: scrapingbee.ScrapingObject | None = scrapingbee.send_request(searching_query)
+        except Exception as e:
+            config.logger.exception(e)
+            return
     organic_results: list[scrapingbee.OrganicResult] = scraping_object.organic_results
     for organic_result in organic_results:
         organic_result.searching_query = searching_query

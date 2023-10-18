@@ -1,5 +1,5 @@
 /mongo_data/
-/apikeys.json
+/apikeys.jsonc
 /.env
 __pycache__/
 .idea/
