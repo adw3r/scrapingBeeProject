@@ -64,6 +64,7 @@ def extract_donors(query: str):
     config.logger.info(f'{stmnt=}')
     results = database.OrganicResultsRepo.collection.find(stmnt, {})
     c = 0
+    res = False
     for result in results:
         url = result['url']
         webbrowser.open(url)
@@ -74,6 +75,10 @@ def extract_donors(query: str):
         if c > 10:
             input('enter:')
             c = 0
+            res = True
+    if res:
+        input('enter:')
+        res = False
 
 
 def inf_extract_donors():
